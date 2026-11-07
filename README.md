@@ -1,6 +1,5 @@
 ---
-title: Lumina Low-Light Restoration
-emoji: 🌙
+title: Lumina Low Light Restoration
 colorFrom: indigo
 colorTo: gray
 sdk: gradio
@@ -8,148 +7,428 @@ sdk_version: 6.31.0
 python_version: "3.12"
 app_file: app.py
 pinned: false
-short_description: Adaptive hybrid (classical + DL) low-light image restoration
+short_description: Adaptive hybrid (classical and DL) low light image restoration
 ---
 
-# 🌙 Lumina: adaptive low-light image restoration
+<div align="center">
 
-**Computer Vision Hackathon 2026 · Problem P1: Robust Low-Light Image Restoration and Enhancement**
+# LUMINA
 
-> *See what the dark hid, without inventing what wasn't there.*
+### See what the dark hid, without inventing what was not there.
 
-**Live app:** https://lumina-t76.vercel.app  ·  **Engine (+ classic interface):** https://darshuuuu-lumina-lowlight.hf.space  ·  **Code:** https://github.com/darshchandran/lumina-lowlight  ·  **Evaluation:** [`eval_P1_T76.md`](eval_P1_T76.md)  ·  **Design doc:** [`docs/DESIGN.md`](docs/DESIGN.md)  ·  **Architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+Adaptive low-light image restoration · classical CV + two small networks · CPU only · no generative model
 
-Lumina restores dark, noisy, colour-shifted photos with a **hybrid** of classical computer vision and two small neural networks. Every enhancement setting is chosen per image from measurements of that image, and the app explains in plain language what it noticed and what it did.
+<br/>
 
-![Visual comparison](results/figures/5_visual_comparison.jpg)
+<a href="https://lumina-t76.vercel.app"><img src="https://img.shields.io/badge/Live_App-lumina--t76.vercel.app-111827?style=for-the-badge&labelColor=C9A227" alt="Live app"/></a>
+&nbsp;
+<a href="https://darshuuuu-lumina-lowlight.hf.space"><img src="https://img.shields.io/badge/Engine-Hugging_Face_Space-111827?style=for-the-badge&labelColor=4B5563" alt="Engine"/></a>
+&nbsp;
+<a href="https://github.com/darshchandran/lumina-lowlight"><img src="https://img.shields.io/badge/Code-GitHub-111827?style=for-the-badge&labelColor=4B5563" alt="Code"/></a>
 
-## Highlights
+<br/><br/>
 
-All test images are unseen (never used for training, validation or tuning). LOL-v2 real is restricted to the 9 pairs that are **not** pixel-identical to LOL-v1 training images (86 of its 100 inputs are; see the correction in [`eval_P1_T76.md`](eval_P1_T76.md)). CPU only.
+<img src="https://img.shields.io/badge/PSNR-18.19_dB-059669?style=flat-square" alt="PSNR"/>
+<img src="https://img.shields.io/badge/SSIM-0.769-059669?style=flat-square" alt="SSIM"/>
+<img src="https://img.shields.io/badge/LPIPS-0.249-059669?style=flat-square" alt="LPIPS"/>
+<img src="https://img.shields.io/badge/NIQE-4.25-059669?style=flat-square" alt="NIQE"/>
+<img src="https://img.shields.io/badge/noise_σ-1.50-059669?style=flat-square" alt="noise"/>
+<img src="https://img.shields.io/badge/params-155‚140_·_0.6_MB-1F2937?style=flat-square" alt="params"/>
+<img src="https://img.shields.io/badge/CPU_p50-808_ms-1F2937?style=flat-square" alt="latency"/>
+<img src="https://img.shields.io/badge/best_on-7_of_8_paired_metrics-1F2937?style=flat-square" alt="wins"/>
 
-| Average over 3 paired test sets (124 pairs, sets weighted equally) | PSNR ↑ | SSIM ↑ | LPIPS ↓ | NIQE ↓ | Residual noise σ ↓ | ΔE2000 ↓ |
-|---|---|---|---|---|---|---|
-| Zero-DCE++ (official weights) | 16.16 | 0.595 | 0.337 | 7.41 | 5.06 | 18.06 |
-| Classical only (ours) | 16.74 | 0.618 | 0.477 | 6.92 | 5.38 | 16.51 |
-| Deep learning only (ours) | 17.65 | 0.589 | 0.349 | 7.58 | 6.62 | 15.22 |
-| **Hybrid (ours)** | **18.19** | **0.769** | **0.249** | **4.25** | **1.50** | **13.36** |
+<br/><br/>
 
-- **LOL-v1 eval15 / clean LOL-v2 real:** hybrid 19.13 / 18.65 dB PSNR, SSIM 0.777 / 0.770, LPIPS 0.207 / 0.283; best of all methods on both sets except new-overexposure.
-- **Darkness sweep (30 unseen references):** best method in all six conditions (×0.5 … ×0.025 by 1.5–2.6 dB; under a strong spotlight only narrowly in PSNR, clearly in SSIM).
-- **ExDark real-world night photos (no ground truth):** lowest residual noise (1.89); the official Zero-DCE++ has the best NIQE (4.29 vs 4.62).
-- **Image-quality-aware update:** measures noise, sharpness, colourfulness, JPEG blocking and resolution and adapts to them; handles small compressed photos (flower JPEG: blocks 2.03 → 1.31, grain 2.83 → 1.29, colourfulness 0.63 → 0.54) and returns full-size results with real (not invented) detail. Neutral on the LOL-style test sets after one fix (its first version capped saturation before denoising and lost 0.27–0.76 dB; the fix was prompted by that test result and chosen on fresh validation data, disclosed in [`eval_P1_T76.md`](eval_P1_T76.md) §9.5–9.6). A final source audit made its sharpening actually act and stopped pre-denoising from hiding noise from the restorer (both chosen on validation with `scripts/validate.py`, §9.8). ExDark NIQE is worse with the update (4.18 → 4.62).
-- **Honest weak spots:** not best on LOL-v2 synthetic (16.80 vs 18.04 dB for DL-only); the most new overexposure of our methods (1.11 % avg); Auto mode cannot beat "always hybrid" on validation, so it keeps the hybrid unless another output is clearly better. Details in [`eval_P1_T76.md`](eval_P1_T76.md) §6–9.
-- **Two tiny networks:** 10.6k + 144.6k parameters (~0.6 MB); 0.8–1.0 s per 600×400 image, 2.2–2.7 s at 1280×960, 2.5–3.0 s for a 2048-px photo returned full size, on a laptop CPU (range of our final runs).
-- Full evaluation, model selection, ablation and failure analysis: [`eval_P1_T76.md`](eval_P1_T76.md) (raw tables: [`results/tables.md`](results/tables.md)).
+<img src="assets/cafe_before_after.jpg" alt="Before / after — Lumina hybrid on LOL-v2 real test 00706" width="100%"/>
 
-## Architecture
+<sub>
+<strong>Before</strong> 3% mean brightness · <strong>After</strong> hybrid 45% · blockiness 1.39 → 1.17 · LOL-v2 real <code>00706</code> (unseen) · residual-only restorer, no generative model
+</sub>
+
+<br/><br/>
+
+<a href="#system-architecture"><img src="https://img.shields.io/badge/Architecture-111827?style=for-the-badge" alt="Architecture"/></a>
+<a href="#pipeline"><img src="https://img.shields.io/badge/Pipeline-111827?style=for-the-badge" alt="Pipeline"/></a>
+<a href="#results"><img src="https://img.shields.io/badge/Results-111827?style=for-the-badge" alt="Results"/></a>
+<a href="#requirements--code"><img src="https://img.shields.io/badge/Requirements→Code-111827?style=for-the-badge" alt="Requirements"/></a>
+<a href="eval_P1_T76.md"><img src="https://img.shields.io/badge/Evaluation-111827?style=for-the-badge" alt="Evaluation"/></a>
+<a href="docs/DESIGN.md"><img src="https://img.shields.io/badge/Design-111827?style=for-the-badge" alt="Design"/></a>
+
+<br/><br/>
+
+<strong>Computer Vision Hackathon 2026</strong> · Problem P1 · Team T76<br/>
+<code>1RUA24CSE0170</code> · <code>1RUA24CSE0195</code> · <code>1RUA24CSE0127</code> · <code>1RUA24CSE0115</code>
+
+</div>
+
+---
+
+**Jump:** [Summary](#summary) · [Try it](#try-it) · [Deliverables](#deliverables) · [Architecture](#system-architecture) · [Pipeline](#pipeline) · [Deployment](#deployment) · [Requirements → code](#requirements--code) · [Results](#results) · [Data](#data--split) · [Product behaviour](#product-behaviour) · [Failures](#known-failures) · [Ethics](#ethics-privacy--limits) · [Reproduce](#reproduce) · [Team](#team)
+
+---
+
+## Summary
+
+| | |
+|:--|:--|
+| **Problem** | Brightening a dark photo also brightens noise, blows out lamps, and amplifies JPEG blocks. |
+| **Approach** | Per-image diagnosis → adaptive parameters → Retinex + fine-tuned Zero-DCE++ fused per pixel → noise-map-conditioned U-Net → above-noise detail recovery → full-size return. |
+| **Headline result** | Best of six methods on **7 of 8** paired metrics: **18.19 dB** PSNR · **0.769** SSIM · **0.249** LPIPS · **4.25** NIQE · noise σ **1.50** (124 pairs, 3 sets weighted equally, CPU). |
+| **Footprint** | Zero-DCE++ **10,561** params (51 KB) + RestoreNet **144,579** params (575 KB) · hybrid **808 ms** @ 600×400 · **2194 ms** @ 1280×960 · **2476 ms** @ 2048 full-size (±25%). |
+| **Honest losses** | Not best on LOL-v2 synthetic (DL-only 18.04 vs 16.80). ExDark NIQE loses to official Zero-DCE++ (4.29 vs 4.62). Highest new overexposure of our methods (1.11%). |
+
+Full numbers, ablation, darkness sweep, quality-aware disclosure: [`eval_P1_T76.md`](eval_P1_T76.md).
+
+---
+
+## Try it
+
+```bash
+# no install
+open https://lumina-t76.vercel.app          # Auto Enhance
+
+# local engine + Gradio UI
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt && python app.py   # → http://localhost:7860
+
+# docker (written; Python path is what we tested)
+docker build -t lumina . && docker run -p 7860:7860 lumina
+
+# frontend against local engine
+cd web && LUMINA_API_BASE=http://127.0.0.1:7860 node build.mjs
+python -m http.server 8080 --directory dist
+```
+
+Weights (~0.7 MB) ship in `weights/` — no download for inference.
+
+---
+
+## Deliverables
+
+| Deliverable | Location |
+|:--|:--|
+| Live web app | [lumina-t76.vercel.app](https://lumina-t76.vercel.app) |
+| Engine + Gradio UI | [darshuuuu-lumina-lowlight.hf.space](https://darshuuuu-lumina-lowlight.hf.space) |
+| Evaluation + failures | [`eval_P1_T76.md`](eval_P1_T76.md) · [`results/failures/`](results/failures/) |
+| Design / requirements | [`docs/DESIGN.md`](docs/DESIGN.md) |
+| Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Frontend / API | [`docs/FRONTEND.md`](docs/FRONTEND.md) |
+| Source | [`app.py`](app.py) · [`api.py`](api.py) · [`lowlight/`](lowlight/) · [`web/`](web/) |
+
+<details>
+<summary><strong>Full inventory</strong></summary>
+
+| Category | Item | Path |
+|:--|:--|:--|
+| App | Engine / API / frontend | [`app.py`](app.py) · [`api.py`](api.py) · [`web/`](web/) |
+| Classical | Illumination, Retinex, CLAHE, denoise, colour | [`lowlight/classical.py`](lowlight/classical.py) |
+| Classical | Diagnosis + adaptive params + explanations | [`lowlight/analysis.py`](lowlight/analysis.py) |
+| DL | Zero-DCE++ / RestoreNet | [`lowlight/dce.py`](lowlight/dce.py) · [`lowlight/restore.py`](lowlight/restore.py) |
+| Hybrid | Fusion, noise map, methods, ablations | [`lowlight/pipeline.py`](lowlight/pipeline.py) |
+| Metrics | PSNR, SSIM, LPIPS, NIQE, ΔE, EPI, noise | [`lowlight/metrics.py`](lowlight/metrics.py) |
+| Train / eval | download, train, evaluate, report, validate | [`scripts/`](scripts/) |
+| Artefacts | metrics, tables, figures, failures, logs | [`results/`](results/) |
+| Models | Trained + official weights | [`weights/`](weights/) |
+| Docs | DESIGN, ARCHITECTURE, FRONTEND, DEMO_AND_VIVA | [`docs/`](docs/) |
+
+</details>
+
+---
+
+## System architecture
+
+Every box maps to a real function. Source of truth: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+### End-to-end (browser → engine → pipeline)
+
+```mermaid
+flowchart TD
+    U([User: phone / laptop browser]) -->|LUMINA on Vercel<br/>web/index.html + ui.js + lumina.js| API["api.py restore()<br/>POST /gradio_api/call/restore<br/>validation, cap ≤2048 px"]
+    U -.->|classic Gradio fallback| APP["app.py — Gradio UI"]
+    API --> FULL["pipeline.run_full<br/>enhance ≤1280 px, return input size"]
+    APP --> FULL
+    FULL --> RUN["pipeline.run(img, method, preset, strength)<br/>classical / dl / hybrid"]
+
+    subgraph S1["1 · Classical analysis — classical.py, analysis.py"]
+        T["estimate_illumination<br/>max-RGB + guided filter → T"]
+        D["diagnose<br/>brightness, noise, lighting spread, cast,<br/>sharpness, edges, colourfulness, JPEG blocks, size"]
+        PR["choose_params + solve_gamma<br/>adaptive γ, gain cap, CLAHE, WB, pre-denoise"]
+        PD["pre_denoise<br/>chroma + 8×8 boundary deblock"]
+        T --> D --> PR --> PD
+    end
+
+    subgraph S2["2 · Brightening candidates"]
+        RX["retinex_enhance<br/>I/T · T^γ gain-capped"]
+        DC["Zero-DCE++ — dce.py<br/>fine-tuned on LOL train"]
+        QA["choose_dce_scale<br/>quality-aware curve strength"]
+        DC --> QA
+    end
+
+    subgraph S3["3 · Adaptive fusion — pipeline.py"]
+        FW["fusion_weights<br/>exposedness × contrast ÷ amplification"]
+        PB["pyramid_blend<br/>Laplacian pyramid, 5 levels"]
+        HG["protect_highlights<br/>soft-knee roll-off"]
+        FW --> PB --> HG
+    end
+
+    subgraph S4["4 · Contrast and colour"]
+        CL["clahe Lab L 16-bit"] --> CC["colour_correct<br/>partial gray-world + saturation"]
+    end
+
+    subgraph S5["5 · DL restoration — restore.py"]
+        NM["noise_map<br/>σ after brightening × relative gain"]
+        RN["RestoreNet U-Net 144579 params<br/>RGB + noise map → residual"]
+        NM --> RN
+    end
+
+    RUN --> T
+    PD --> RX & DC
+    RX --> FW
+    QA --> FW
+    HG --> CL
+    CC --> RN
+    HG --> NM
+    RN --> DR["6 · recover_detail<br/>above-noise detail, halo clamp"]
+    DR --> UI["adjust_exposure — user intent"]
+    UI --> TRF["7 · run_full detail transfer<br/>photo's own fine band × gain"]
+    TRF --> OUT([JSON: classical + dl + hybrid WebP,<br/>diagnostics, maps, timings, Auto recommend])
+```
+
+### Training and evaluation flow
+
+```mermaid
+flowchart LR
+    DL[scripts/download_data.py] --> LOL[(LOL our485)]
+    LOL -->|seeded 435/50| TD[scripts/train_dce.py]
+    TD --> W1[weights/dce_finetuned.pth]
+    W1 --> TR[scripts/train_restore.py]
+    LOL --> TR
+    TR --> W2[weights/restore_net.pth]
+    W1 & W2 --> EV[scripts/evaluate.py]
+    T1[(eval15)] & T2[(LOL-v2 clean)] & T3[(LOL-v2 synth)] & T4[(ExDark)] --> EV
+    EV --> RP[scripts/report.py] --> R[results/tables.md + figures + failures]
+```
+
+---
+
+## Pipeline
+
+| Method | Path in `pipeline.run` |
+|:--|:--|
+| Histogram equalisation (baseline) | `classical.histogram_equalize` |
+| CLAHE only (baseline) | `classical.clahe` |
+| Zero-DCE++ official (baseline) | published weights, no fine-tune |
+| **Classical only** | analysis (+ pre-denoise) → Retinex → highlight guard → gain-aware bilateral + guided denoise → CLAHE + colour + `limit_saturation` → `recover_detail` |
+| **Deep learning only** | fine-tuned Zero-DCE++ alone |
+| **Hybrid** | stages 1→6 above; stage 7 when input > 1280 px |
+
+Ablations (`pipeline.ABLATIONS`) remove one stage at a time on the same code path.
+
+| Stage | Module | Role |
+|:--|:--|:--|
+| Illumination / Retinex | `classical.estimate_illumination`, `retinex_enhance`, `solve_gamma` | Max-RGB prior + guided-filter `T`; gain-capped re-lighting |
+| Diagnosis / params | `analysis.diagnose`, `choose_params`, `strategy`, `detail_strengths` | Every strength from measurements of this photo |
+| Classical restore | `clahe`, `denoise`, `colour_correct`, `protect_highlights`, `pre_denoise`, `limit_saturation`, `recover_detail` | Adaptive contrast, noise, colour, detail |
+| Zero-DCE++ | `dce.py`, `scripts/train_dce.py` | Fine-tuned curves; `choose_dce_scale` for quality-aware strength |
+| Fusion | `fusion_weights`, `pyramid_blend` | Per-pixel exposedness × contrast ÷ amplification; 5-level Laplacian |
+| Noise-map U-Net | `restore.py`, `pipeline.noise_map`, `scripts/train_restore.py` | 144,579-param residual U-Net conditioned on illumination-derived noise map |
+| Full-size / Auto | `pipeline.run_full`, `api.recommend` | Enhance ≤1280, return ≤2048 with own detail; Auto keeps hybrid unless another output clearly wins |
+
+| Pipeline | Strength | Weakness |
+|:--|:--|:--|
+| Classical | 193 ms · few new clips | Leaves noise (σ 5.38) |
+| Deep learning | Natural brightening · 219 ms | Cannot denoise (σ 6.62); amplifies JPEG |
+| **Hybrid** | Best structure + noise (SSIM **0.769**, σ **1.50**) | 808 ms · more clipping (1.11%) |
+
+---
+
+## Deployment
 
 ```
-Browser ──► Vercel: LUMINA web app (web/, the team's LUMORA v4 design, static HTML/CSS/JS)
-              │  HTTPS + CORS, image as data URL, JSON response (WebP images)
-              ▼
-            Hugging Face Space: Python engine (app.py + api.py)
-              POST /gradio_api/call/restore → classical + deep learning + hybrid (v3) in one call
-              the classic Gradio interface keeps running here as a fallback
+Browser ──► Vercel (static web/) ──HTTPS + CORS──► Hugging Face Space
+                                                    app.py + api.py
+                                                    POST /gradio_api/call/restore
+                                                    CPU inference · Gradio fallback UI
 ```
 
-Frontend integration details (endpoint audit, every control, security, limits, tests): [`docs/FRONTEND.md`](docs/FRONTEND.md).
+| Layer | Stack |
+|:--|:--|
+| Frontend | Static HTML/CSS/JS (LUMORA v4 → LUMINA) · Node `web/build.mjs` · Vercel |
+| Engine | Gradio 6.31 · `gr.api` JSON · HF Space (CPU; GPU never requested) |
+| Models | PyTorch CPU · ONNX not used · weights in-repo |
+| Classical | OpenCV · NumPy |
+| Metrics | scikit-image · pyiqa · custom ΔE2000 / EPI / noise |
+| Transfer | Data URL in · WebP out |
+| Privacy | Stateless · no DB · Gradio temp purged hourly |
+| Self-host | `Dockerfile` (python:3.12-slim + CPU PyTorch) |
 
-## How it works
+Endpoint audit, controls, CSP: [`docs/FRONTEND.md`](docs/FRONTEND.md).
 
-```
-photo ─► ① illumination map T (max-RGB + guided filter) + quality diagnosis (brightness, lighting spread, noise,
-           sharpness, edges, colourfulness / cast, JPEG blockiness, resolution) ─► adaptive parameters + strategy
-        ─► (blocky JPEG / noisy classical path) denoise + boundary deblock BEFORE brightening, lower gain cap
-        ─► ② two candidates: Retinex re-lighting (classical) │ Zero-DCE++ fine-tuned (DL, quality-aware curve strength)
-        ─► ③ per-pixel quality-weighted Laplacian-pyramid fusion + soft highlight roll-off
-        ─► ④ adaptive CLAHE + colour correction (the classical path also caps saturation, after its denoising)
-        ─► ⑤ restoration U-Net conditioned on a noise-level map derived from the illumination model
-        ─► ⑥ adaptive detail recovery AFTER denoising (above-noise detail only, halo clamp; off when sharp or noisy)
-        ─► ⑦ full-size output: enhanced at ≤1280 px, returned at the photo's size (≤2048 px) with its own detail
-        ─► your intent (Natural / Auto / Max visibility + brightness slider); Auto also picks the method per photo
-```
+---
 
-Full diagram with function names: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+## Requirements → code
+
+From [`docs/DESIGN.md` §3](docs/DESIGN.md):
 
 | Requirement | Implementation |
-|---|---|
-| Illumination estimation + decomposition, Retinex | `lowlight/classical.py`: `estimate_illumination`, `retinex_enhance`, `solve_gamma` |
-| CLAHE, bilateral / guided-filter denoising, colour correction | `classical.clahe`, `classical.denoise`, `classical.colour_correct`, `protect_highlights` |
-| Adaptive parameter selection | `lowlight/analysis.py`: `diagnose` → `choose_params` |
-| Deep model (Zero-DCE++), fine-tuned | `lowlight/dce.py`, `scripts/train_dce.py` |
-| DL restoration conditioned on classical illumination | `lowlight/restore.py`, `scripts/train_restore.py`, `pipeline.noise_map` |
-| Adaptive selection / fusion, quality-aware strategy | `pipeline.fusion_weights`, `pyramid_blend`, `choose_dce_scale`; `analysis.strategy`, `detail_strengths`, `quality_labels`; `classical.pre_denoise`, `recover_detail`, `limit_saturation`; `pipeline.run_full`; `api.recommend` (Auto mode) |
-| Classical vs DL vs hybrid, ablation, robustness, failures | `scripts/evaluate.py`, `scripts/report.py` → [`eval_P1_T76.md`](eval_P1_T76.md) |
+|:--|:--|
+| Illumination + Retinex | `classical.estimate_illumination`, `retinex_enhance`, `solve_gamma` |
+| CLAHE | `classical.clahe` (Lab L, 16-bit, adaptive) |
+| Edge-preserving denoising | `classical.denoise`, `pipeline.classical_denoise` |
+| Contrast / colour | `clahe`, `colour_correct`, `protect_highlights` |
+| Adaptive parameters | `analysis.diagnose` → `choose_params` |
+| Low-light DL + fine-tune | `dce.py` + `train_dce.py` · `restore.py` + `train_restore.py` |
+| Classical ↔ DL coupling | `pipeline.noise_map` → `RestoreNet` |
+| Adaptive combine | `fusion_weights` + `pyramid_blend` |
+| Image-quality-aware | diagnosis → strategy / detail / DCE scale / pre-denoise / full-size transfer |
+| Classical vs DL vs hybrid + ablation | `pipeline.METHODS`, `pipeline.ABLATIONS` → [`eval_P1_T76.md`](eval_P1_T76.md) |
+| Robustness / unseen | darkness sweep ×0.5…×0.025 + spotlight · clean LOL-v2 · ExDark |
 
-## Human-centred design
+---
 
-- **Explains itself:** "What we noticed / What we did (and why)" in plain language, plus every intermediate map (illumination, gain, fusion weights, noise map, removed noise) in *Under the hood*.
-- **Honest:** a *Recoverability* rating (High/Medium/Low) sets expectations; warnings for blown-out or still-grainy areas; a "magenta = pure white" clipping check.
-- **No invented content:** curve and Retinex brightening are pixel-wise and monotone; the restorer predicts residual corrections only. No generative model.
-- **User control:** *Natural night mood · Auto · Maximum visibility* presets plus a brightness slider.
-- **Accessible and private:** phone camera capture, large touch targets, colour-blind-safe (cividis) heatmaps; images processed in memory and temp files purged within an hour.
+## Results
 
-## Run it
+All test images **unseen**. LOL-v2 real restricted to **9** pairs not duplicated in LOL-v1 `our485` (86/100 were; earlier numbers withdrawn — see eval). CPU only.
 
-**With Python 3.10+ (tested):**
-```bash
-pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install -r requirements.txt
-python app.py
-```
-**Or with Docker:**
-```bash
-docker build -t lumina . && docker run -p 7860:7860 lumina
-```
-_(The Dockerfile was not built in our environment because Docker wasn't available; the Python route above is what we tested.)_
-Open http://localhost:7860 for the engine and its classic interface. The trained weights (~0.7 MB) are in `weights/`, so no download is needed.
+### Paired average (124 pairs, sets weighted equally)
 
-**Web frontend (LUMINA) against the local engine:**
-```bash
-cd web && LUMINA_API_BASE=http://127.0.0.1:7860 node build.mjs && python -m http.server 8080 --directory dist
-```
-Open http://localhost:8080. Deployment to Vercel: [`docs/FRONTEND.md`](docs/FRONTEND.md).
+| Method | PSNR ↑ | SSIM ↑ | LPIPS ↓ | NIQE ↓ | Noise σ ↓ | ΔE2000 ↓ | Latency |
+|:--|--:|--:|--:|--:|--:|--:|--:|
+| Zero-DCE++ official | 16.16 | 0.595 | 0.337 | 7.41 | 5.06 | 18.06 | 217 ms |
+| Classical only | 16.74 | 0.618 | 0.477 | 6.92 | 5.38 | 16.51 | 193 ms |
+| DL only | 17.65 | 0.589 | 0.349 | 7.58 | 6.62 | 15.22 | 219 ms |
+| **Hybrid** | **18.19** | **0.769** | **0.249** | **4.25** | **1.50** | **13.36** | 808 ms |
 
-## Reproduce training and every number in the evaluation
+| Set | Hybrid |
+|:--|:--|
+| LOL-v1 eval15 | 19.13 dB / 0.777 SSIM / 0.207 LPIPS |
+| LOL-v2 real (clean 9) | 18.65 / 0.770 / 0.283 |
+| LOL-v2 synthetic | 16.80 (DL-only wins: 18.04) |
+| ExDark (no GT) | noise **1.89** (best) · NIQE 4.62 (official 4.29) |
+| Darkness sweep (30×6) | best in all six conditions |
+
+Per-set tables, ablation, quality-aware before/after: [`eval_P1_T76.md`](eval_P1_T76.md) · [`results/tables.md`](results/tables.md) · [`results/metrics.json`](results/metrics.json)
+
+<p align="center">
+<img src="results/figures/1_method_comparison.png" width="100%" alt="Method comparison"/><br/>
+<img src="results/figures/5_visual_comparison.jpg" width="100%" alt="Visual comparison"/>
+</p>
+
+<details>
+<summary>Robustness · ablation · training curves</summary>
+<br/>
+<p align="center">
+<img src="results/figures/2_robustness_illumination.png" width="100%" alt="Robustness"/><br/>
+<img src="results/figures/3_ablation.png" width="100%" alt="Ablation"/><br/>
+<img src="results/figures/4_training_curves.png" width="100%" alt="Training"/>
+</p>
+</details>
+
+---
+
+## Data & split
+
+| Set | n | Role |
+|:--|--:|:--|
+| LOL-v1 `our485` train / val | 435 / 50 | Train + model selection (`results/split.json`, seed 0) |
+| Synthetic dark of train refs | 435 | RestoreNet training |
+| LOL-v1 `eval15` | 15 | Paired test |
+| LOL-v2 real clean | 9 of 100 | Paired test (leak-filtered) |
+| LOL-v2 synthetic | 100 | Paired test |
+| ExDark 384 px | 60 | No-reference test |
+| Darkness sweep | 180 / method | Robustness |
+
+Demo provenance: [`examples/SOURCES.md`](examples/SOURCES.md).
+
+---
+
+## Product behaviour
+
+| Behaviour | How |
+|:--|:--|
+| Plain-language explanation | `analysis` → “What we noticed / What we did” |
+| Recoverability High / Medium / Low | From diagnosis |
+| Under the hood | Illumination, gain, fusion weights, noise map, removed noise |
+| Intent | Natural · Auto · Maximum visibility + brightness slider |
+| Auto method pick | `api.recommend` — hybrid unless another output clearly better |
+| Compare methods | Classical / DL / hybrid in one API call |
+| Accessibility | Phone capture · large targets · cividis heatmaps |
+| Privacy | In-memory · temp files ≤1 h |
+
+---
+
+## Known failures
+
+| Case | What happened | Planned fix |
+|:--|:--|:--|
+| Brighter than reference (eval15 `179`, 12.68 dB) | Target 0.42 brighter than some GTs | Learn target from data |
+| Coloured light neutralised (ExDark `2015_06796`) | Gray-world vs single coloured lamp | Disable WB when one source dominates |
+| Dark on purpose (ExDark `2015_04779`) | Black studio lifted; blocks | Low-key detector + gain-aware deblock |
+| Correlated colour noise (ExDark `2015_01791`) | U-Net trained on independent noise | Train on real compressed captures |
+
+[`eval_P1_T76.md` §8](eval_P1_T76.md) · [`results/failures/`](results/failures/)
+
+---
+
+## Ethics, privacy & limits
+
+Outputs are **for viewing, not evidence** — not for identification or surveillance. No generative model; brightening is monotone; restorer predicts residuals only. LOL is indoor — outdoor leans classical. Detail below the noise floor is not recovered. LOL / LOL-v2 licences unverified; Zero-DCE++ repo has no licence file. Details: [`docs/DESIGN.md` §8–9](docs/DESIGN.md).
+
+---
+
+## Reproduce
+
+<details>
+<summary><strong>Train, evaluate, report</strong></summary>
 
 ```bash
 pip install -r requirements-dev.txt
-python scripts/download_data.py          # LOL, LOL-v2 test splits, 100 fresh LOL-v2 synthetic train pairs (validation only), ExDark, Zero-DCE++ weights (~770 MB, to $DATA_DIR or ./data)
-python scripts/train_dce.py              # Zero-DCE++ fine-tune on LOL train split (435/50 seeded split -> results/split.json)
-python scripts/train_restore.py          # restoration U-Net v3 (noise-level map; LOL + synthetic dark pairs)
-python scripts/train_restore.py --no-map # ablation model
-python scripts/evaluate.py               # all methods x all test sets, ablation, robustness, latency (~20 min, 8 cores)
-python scripts/report.py                 # results/tables.md, results/figures/, results/failures/
-python scripts/validate.py NAME '{...}'  # validation-only design experiments -> results/validation/ (see its docstring)
-python -m pytest -q                      # tests
-```
-Everything runs on CPU, and seeds are fixed. The training logs we got are in `results/train_log_*.json`.
-
-## Repository layout
-
-```
-web/                    LUMINA web frontend for Vercel (index.html, ui.js = teammate's UI, lumina.js = engine integration)
-api.py                  JSON API used by the web frontend (all three pipelines in one call)
-app.py                  Gradio app: classic interface + registers the API
-lowlight/classical.py   classical CV primitives
-lowlight/analysis.py    image diagnosis, adaptive parameters, plain-language explanations
-lowlight/dce.py         Zero-DCE++ model
-lowlight/restore.py     noise-aware restoration U-Net
-lowlight/pipeline.py    methods (baselines, classical, DL, hybrid) + ablation switches
-lowlight/metrics.py     PSNR, SSIM, LPIPS, NIQE, ΔE2000, EPI, noise, clipping
-scripts/                download, train, evaluate, report
-weights/                trained weights (+ official Zero-DCE++ weights)
-results/                metrics, tables, figures, failure cases, training logs, split
-docs/                   design document, architecture, in-app "About"
-examples/               unseen test images used as demo examples (sources listed)
-tests/                  pytest suite (pipeline + API integration tests)
+python scripts/download_data.py          # ~770 MB datasets + official weights
+python scripts/train_dce.py
+python scripts/train_restore.py
+python scripts/train_restore.py --no-map
+python scripts/evaluate.py               # ~20 min, 8 cores, CPU
+python scripts/report.py
+python -m pytest -q
 ```
 
-## Limitations and ethics (short version)
+Fixed seeds. Logs: `results/train_log_*.json`.
 
-Detail below the sensor noise floor cannot be recovered. Coloured lighting vs colour cast is ambiguous. Already-clipped highlights stay clipped. The networks were trained on LOL (indoor), so outdoor scenes rely more on the classical stages. **Outputs are for viewing, not evidence:** don't use them for identification or surveillance. Details: [`docs/DESIGN.md` §8–9](docs/DESIGN.md).
+</details>
 
-## Credits
+<details>
+<summary><strong>Repository layout</strong></summary>
 
-Zero-DCE++ (Li, Guo & Loy, TPAMI 2021; official weights), LOL (Wei et al., BMVC 2018), LOL-v2 (Yang et al., TIP 2021), ExDark (Loh & Chan, CVIU 2019), LPIPS/NIQE via [pyiqa](https://github.com/chaofengc/IQA-PyTorch). The guided filter, CLAHE, Laplacian-pyramid blending and exposure-fusion weights are re-implemented from the original papers.
+```
+web/           Vercel frontend
+api.py         JSON API (3 pipelines / call)
+app.py         Gradio engine + UI
+lowlight/      classical, analysis, dce, restore, pipeline, metrics
+scripts/       download, train, evaluate, report, validate
+weights/       dce_finetuned, restore_net(+_nomap), zero_dce_pp_official
+results/       metrics, tables, figures, failures, logs, split
+docs/          DESIGN, ARCHITECTURE, FRONTEND, DEMO_AND_VIVA
+examples/      unseen demos
+assets/        README hero
+tests/         pytest
+Dockerfile     self-host
+```
+
+</details>
+
+---
+
+## Team
+
+| Name | USN |
+|:--|:--|
+| Indhu S | 1RUA24CSE0170 |
+| Karthikeya D S | 1RUA24CSE0195 |
+| Dheeraj Chinta | 1RUA24CSE0127 |
+| Darsh Chandran | 1RUA24CSE0115 |
+
+**AI assistance.** University policy allows AI when acknowledged. Anthropic Claude (Claude Code) planned the architecture, wrote/debugged most source, ran train/eval, deployed, and drafted docs. We set requirements and limits, chose among options (hosting; restorer v3 over v2 on validation), provided the LUMORA v4 UI, and own every claim.
+
+**Credits.** Zero-DCE++ (Li, Guo & Loy, TPAMI 2021) · LOL (Wei et al., BMVC 2018) · LOL-v2 (Yang et al., TIP 2021) · ExDark (Loh & Chan, CVIU 2019) · LPIPS/NIQE via [pyiqa](https://github.com/chaofengc/IQA-PyTorch). Guided filter, CLAHE, Laplacian blending, exposure-fusion weights re-implemented from their papers.
+
+<p align="center"><br/><sub>Computer Vision Hackathon 2026 · Team T76</sub></p>
