@@ -24,7 +24,9 @@ Adaptive low-light image restoration · classical CV + two small networks · CPU
 &nbsp;
 <a href="https://darshuuuu-lumina-lowlight.hf.space"><img src="https://img.shields.io/badge/Engine-Hugging_Face_Space-111827?style=for-the-badge&labelColor=4B5563" alt="Engine"/></a>
 &nbsp;
-<a href="https://github.com/darshchandran/lumina-lowlight"><img src="https://img.shields.io/badge/Code-GitHub-111827?style=for-the-badge&labelColor=4B5563" alt="Code"/></a>
+<a href="https://github.com/darshchandran/Lumina"><img src="https://img.shields.io/badge/Code-GitHub-111827?style=for-the-badge&labelColor=4B5563" alt="Code"/></a>
+
+**Official website: [lumina-t76.vercel.app](https://lumina-t76.vercel.app/)**
 
 <br/><br/>
 
@@ -63,7 +65,7 @@ Adaptive low-light image restoration · classical CV + two small networks · CPU
 
 ---
 
-**Jump:** [Summary](#summary) · [Try it](#try-it) · [Deliverables](#deliverables) · [Architecture](#system-architecture) · [Pipeline](#pipeline) · [Deployment](#deployment) · [Requirements → code](#requirements--code) · [Results](#results) · [Data](#data--split) · [Product behaviour](#product-behaviour) · [Failures](#known-failures) · [Ethics](#ethics-privacy--limits) · [Reproduce](#reproduce) · [Team](#team)
+**Jump:** [Summary](#summary) · [Try it](#try-it) · [Deliverables](#deliverables) · [Architecture](#system-architecture) · [Pipeline](#pipeline) · [Deployment](#deployment) · [Requirements → code](#requirements--code) · [Results](#results) · [Data](#data--split) · [Product behaviour](#product-behaviour) · [Failures](#known-failures) · [Ethics](#ethics-privacy--limits) · [Reproduce](#reproduce) · [Daily](#daily) · [Weekly](#weekly) · [Team](#team)
 
 ---
 
@@ -71,6 +73,7 @@ Adaptive low-light image restoration · classical CV + two small networks · CPU
 
 | | |
 |:--|:--|
+| **Website** | [lumina-t76.vercel.app](https://lumina-t76.vercel.app/), the official Lumina site and live app |
 | **Problem** | Brightening a dark photo also brightens noise, blows out lamps, and amplifies JPEG blocks. |
 | **Approach** | Per-image diagnosis → adaptive parameters → Retinex + fine-tuned Zero-DCE++ fused per pixel → noise-map-conditioned U-Net → above-noise detail recovery → full-size return. |
 | **Headline result** | Best of six methods on **7 of 8** paired metrics: **18.19 dB** PSNR · **0.769** SSIM · **0.249** LPIPS · **4.25** NIQE · noise σ **1.50** (124 pairs, 3 sets weighted equally, CPU). |
@@ -107,7 +110,7 @@ Weights (~0.7 MB) ship in `weights/` — no download for inference.
 
 | Deliverable | Location |
 |:--|:--|
-| Live web app | [lumina-t76.vercel.app](https://lumina-t76.vercel.app) |
+| Official website (live web app) | [lumina-t76.vercel.app](https://lumina-t76.vercel.app) |
 | Engine + Gradio UI | [darshuuuu-lumina-lowlight.hf.space](https://darshuuuu-lumina-lowlight.hf.space) |
 | Evaluation + failures | [`eval_P1_T76.md`](eval_P1_T76.md) · [`results/failures/`](results/failures/) |
 | Design / requirements | [`docs/DESIGN.md`](docs/DESIGN.md) |
@@ -253,6 +256,7 @@ Browser ──► Vercel (static web/) ──HTTPS + CORS──► Hugging Face 
 
 | Layer | Stack |
 |:--|:--|
+| Website | [lumina-t76.vercel.app](https://lumina-t76.vercel.app/) (official site, Vercel) |
 | Frontend | Static HTML/CSS/JS (LUMORA v4 → LUMINA) · Node `web/build.mjs` · Vercel |
 | Engine | Gradio 6.31 · `gr.api` JSON · HF Space (CPU; GPU never requested) |
 | Models | PyTorch CPU · ONNX not used · weights in-repo |
@@ -389,6 +393,7 @@ python scripts/train_restore.py
 python scripts/train_restore.py --no-map
 python scripts/evaluate.py               # ~20 min, 8 cores, CPU
 python scripts/report.py
+python scripts/validate.py NAME '{...}'  # validation-only design experiments -> results/validation/
 python -m pytest -q
 ```
 
@@ -415,6 +420,26 @@ Dockerfile     self-host
 ```
 
 </details>
+
+---
+
+## Daily
+
+What changed each day, from the commit history (times IST). **Cadence:** one entry per day on which changes are pushed, added with that day's last push; days without changes get no entry.
+
+| Date | What changed | Commits |
+|:--|:--|:--|
+| **2026-11-08** | Official website link ([lumina-t76.vercel.app](https://lumina-t76.vercel.app/)) added across README, docs and page metadata; links updated to the renamed repository `darshchandran/Lumina`; Daily and Weekly sections added. | this update |
+| **2026-11-07** | LUMINA web frontend (team's LUMORA v4 design) on Vercel with the engine's JSON API (00:11). Image-quality-aware enhancement, and LOL-v2 real test leakage removed: 86/100 inputs duplicated LOL-v1 training images, 9 clean pairs kept (01:54). Hybrid saturation ceiling removed after re-validation on fresh data (03:48). Source-audit fixes: sharpening that acts, noise read before pre-denoising, `scripts/validate.py` (10:58). Docker test stage and HTTP smoke test; the image itself is not yet built (11:13). README redesign by Karthikeya, PR #1 (14:22–14:55). | `7d76062` `3cc4d0a` `d0e8d16` `68778a0` `7b2f320` `3fa20e6` |
+| **2026-11-06** | First release: adaptive hybrid pipeline (classical CV + fine-tuned Zero-DCE++ + noise-aware restoration U-Net), restorer v3 chosen on validation, full evaluation and `eval_P1_T76.md`, Gradio engine on Hugging Face Spaces. | `83e9f7c` `2ff5f53` `b85f961` |
+
+## Weekly
+
+A summary per week (Monday–Sunday). **Cadence:** added at the end of each week in which the project changed; metrics are quoted only from an evaluation run that week (`results/metrics.json`).
+
+| Week | Progress | Open at the end of the week |
+|:--|:--|:--|
+| **2026-11-02 → 11-08** (hackathon week) | Built, evaluated and deployed Lumina: website on Vercel, engine on Hugging Face. Hybrid **18.19 dB / 0.769 SSIM / 0.249 LPIPS** averaged over 124 clean test pairs, best of six methods on 7 of 8 paired metrics; best in all six robustness conditions; 29 tests pass. Test-set leakage found and removed; image-quality-aware strategy added and audited, each decision made on validation data (`results/validation/`). | Docker image not yet built or run; noise in compressed JPEGs still under-read; highest new overexposure of our methods (1.11 %); sharpening lowers edge preservation on blurred inputs; Auto mode never beats always-hybrid. |
 
 ---
 

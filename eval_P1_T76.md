@@ -3,7 +3,7 @@
 # Evaluation: P1 Robust Low-Light Image Restoration and Enhancement (Team T76)
 
 **Team T76:** Indhu S (1RUA24CSE0170), Karthikeya D S (1RUA24CSE0195), Dheeraj Chinta (1RUA24CSE0127), Darsh Chandran (1RUA24CSE0115)
-**System:** Lumina, an adaptive hybrid of classical CV and deep learning · **Live app:** https://lumina-t76.vercel.app (engine and classic interface: https://darshuuuu-lumina-lowlight.hf.space) · **Code:** https://github.com/darshchandran/lumina-lowlight
+**System:** Lumina, an adaptive hybrid of classical CV and deep learning · **Live app:** https://lumina-t76.vercel.app (engine and classic interface: https://darshuuuu-lumina-lowlight.hf.space) · **Code:** https://github.com/darshchandran/Lumina
 
 Every number below was produced by `scripts/evaluate.py` and `scripts/report.py`. Per-image values are in `results/per_image.csv`, aggregates in `results/metrics.json`, and the auto-generated tables in `results/tables.md`; the tables in this file are copied from that file programmatically. Metrics that were not measured are marked **n/a** with the reason. Nothing is estimated.
 

@@ -396,7 +396,7 @@
         <h4 style="font-weight:500;margin:14px 0 6px">${esc(ex)} <span class="note">· ${b.n_images[ex]} photos · no reference</span></h4><table><tr><th>Method</th><th>NIQE ↓</th><th>Residual σ ↓</th><th>Clipped %</th><th>PSNR / SSIM</th></tr>${b.methods.map((m) => { const r = b.main[ex][m.key]; return `<tr><td>${esc(m.name)}</td><td>${fmt(r.niqe, 2)}</td><td>${fmt(r.noise, 2)}</td><td>${fmt(r.overexposed, 2)}</td><td><span class="chip un">Unavailable</span></td></tr>`; }).join("")}</table>
         <h4 style="font-weight:500;margin:14px 0 6px">Robustness to darker and uneven lighting <span class="note">· PSNR dB, 30 unseen references</span></h4><div style="overflow-x:auto"><table><tr><th>Method</th>${conds.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>${Object.keys(b.robustness[conds[0]]).map((k) => `<tr><td>${esc(names[k])}</td>${conds.map((c) => `<td>${fmt(b.robustness[c][k].psnr, 2)}</td>`).join("")}</tr>`).join("")}</table></div>
       </details>
-      <p class="note">Full evaluation, model selection, failure cases and limitations: <a href="https://github.com/darshchandran/lumina-lowlight/blob/main/eval_P1_T76.md" target="_blank" rel="noopener">eval_P1_T76.md</a>. Latency measured on ${esc(b.machine)}.</p>`;
+      <p class="note">Full evaluation, model selection, failure cases and limitations: <a href="https://github.com/darshchandran/Lumina/blob/main/eval_P1_T76.md" target="_blank" rel="noopener">eval_P1_T76.md</a>. Latency measured on ${esc(b.machine)}.</p>`;
   };
 
   paint();

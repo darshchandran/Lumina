@@ -2,6 +2,8 @@
 
 The primary interface is the team's **LUMORA v4** design (`lumora-v4.html`, by a teammate), rebranded **LUMINA** and connected to the real restoration engine. It is a static site on **Vercel**; the Python engine stays on **Hugging Face Spaces**.
 
+**Official website:** [lumina-t76.vercel.app](https://lumina-t76.vercel.app/)
+
 ```
 Browser ──► Vercel (static: web/index.html, ui.js, lumina.js, config.js)
    │

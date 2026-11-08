@@ -1,6 +1,6 @@
 # System architecture
 
-Every box below is a function in the code; file and function names are given so the diagram can be checked against the source.
+Every box below is a function in the code; file and function names are given so the diagram can be checked against the source. Live system: [lumina-t76.vercel.app](https://lumina-t76.vercel.app/) (website) → Hugging Face Space (engine).
 
 ```mermaid
 flowchart TD

@@ -4,7 +4,8 @@
 |---|---|
 | Problem | P1: Robust Low-Light Image Restoration and Enhancement |
 | Team | T76: Indhu S, Karthikeya D S, Dheeraj Chinta, Darsh Chandran |
-| Live app | see README |
+| Website | [lumina-t76.vercel.app](https://lumina-t76.vercel.app/) (official Lumina site and live app) |
+| Code | [github.com/darshchandran/Lumina](https://github.com/darshchandran/Lumina) · engine: [darshuuuu-lumina-lowlight.hf.space](https://darshuuuu-lumina-lowlight.hf.space) |
 | Status | Complete: all mandatory and advanced requirements implemented and evaluated |
 
 ---
