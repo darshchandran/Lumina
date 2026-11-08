@@ -7,7 +7,7 @@ sdk_version: 6.31.0
 python_version: "3.12"
 app_file: app.py
 pinned: false
-short_description: Adaptive hybrid (classical and DL) low light image restoration
+short_description: Adaptive hybrid (classical + DL) low-light image restoration
 ---
 
 <div align="center">
